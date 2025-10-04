@@ -56,8 +56,8 @@ describe('JiraService', () => {
       source: 'mcp:jira',
       count: 2,
       items: [
-        { id: '100', key: 'PRJ-1', summary: 'Test summary' },
-        { id: '101', key: 'PRJ-2', summary: '' },
+        { id: '100', key: 'PRJ-1', summary: 'Test summary', status: '' },
+        { id: '101', key: 'PRJ-2', summary: '', status: '' },
       ],
     });
   });

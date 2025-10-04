@@ -35,6 +35,38 @@ npm install
     "timestamp": "2024-03-23T12:34:56.789Z"
   }
   ```
+- `POST /api/mcp/jira/preview` — проксі до Jira через MCP. Приймає тіло:
+  ```json
+  {
+    "jiraUrl": "https://your-team.atlassian.net",
+    "apiKey": "MCP_JIRA_TOKEN",
+    "jql": "project = DEMO ORDER BY created DESC",
+    "limit": 2
+  }
+  ```
+  Повертає `{ "ok": true, "source": "mcp:jira", "count": N, "items": [{ "id", "key", "summary", "status" }, ...] }`.
+- `POST /api/jira/preview` — прямий виклик Jira REST API без MCP (використовує офіційний `/rest/api/3/search/jql`). Приймає:
+  ```json
+  {
+    "jiraUrl": "https://your-team.atlassian.net",
+    "email": "user@example.com",
+    "apiKey": "JIRA_API_TOKEN",
+    "jql": "project = DEMO ORDER BY created DESC",
+    "limit": 3
+  }
+  ```
+  Повертає `{ "ok": true, "source": "jira:api", "count": N, "items": [{ "id", "key", "summary", "status" }, ...] }`.
+- `POST /api/jira/projects` — повертає список проєктів Jira (використовує `/rest/api/3/project/search`). Приймає:
+  ```json
+  {
+    "jiraUrl": "https://your-team.atlassian.net",
+    "email": "user@example.com",
+    "apiKey": "JIRA_API_TOKEN",
+    "startAt": 0,
+    "limit": 50
+  }
+  ```
+  Повертає `{ "ok": true, "source": "jira:api", "count": N, "total": M, "projects": [...] }`.
 
 ## Структура каталогу
 ```
@@ -68,3 +100,5 @@ MCP_BASE_URL="https://mcp-gateway.local/invoke" \
 MCP_API_KEY="super-secret" \
 npm run start:dev
 ```
+
+Зразок `.env` з плейсхолдерами для змінних середовища знаходиться у `.env.example`.
