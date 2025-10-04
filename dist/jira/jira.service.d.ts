@@ -5,6 +5,7 @@ export type JiraPreviewItem = {
     id: string;
     key: string;
     summary: string;
+    status?: string;
 };
 export type JiraPreviewResponse = {
     ok: true;

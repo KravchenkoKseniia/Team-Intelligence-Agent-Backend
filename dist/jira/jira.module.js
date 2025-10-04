@@ -11,14 +11,16 @@ const common_1 = require("@nestjs/common");
 const jira_controller_1 = require("./jira.controller");
 const jira_service_1 = require("./jira.service");
 const mcp_module_1 = require("../mcp/mcp.module");
+const jira_api_controller_1 = require("./jira-api.controller");
+const jira_api_service_1 = require("./jira-api.service");
 let JiraModule = class JiraModule {
 };
 exports.JiraModule = JiraModule;
 exports.JiraModule = JiraModule = __decorate([
     (0, common_1.Module)({
         imports: [mcp_module_1.McpModule],
-        controllers: [jira_controller_1.JiraController],
-        providers: [jira_service_1.JiraService],
+        controllers: [jira_controller_1.JiraController, jira_api_controller_1.JiraApiController],
+        providers: [jira_service_1.JiraService, jira_api_service_1.JiraApiService],
     })
 ], JiraModule);
 //# sourceMappingURL=jira.module.js.map

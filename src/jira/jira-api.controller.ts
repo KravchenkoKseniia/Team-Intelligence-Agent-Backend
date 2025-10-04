@@ -1,6 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { PreviewJiraDirectDto } from './dto/preview-jira-direct.dto';
 import { ListJiraProjectsDto } from './dto/list-jira-projects.dto';
+import { ExportJiraIssuesDto } from './dto/export-jira-issues.dto';
 import { JiraApiService } from './jira-api.service';
 
 @Controller('jira')
@@ -23,5 +24,11 @@ export class JiraApiController {
   @HttpCode(HttpStatus.OK)
   listProjects(@Body() dto: ListJiraProjectsDto) {
     return this.jiraApiService.listProjects(dto);
+  }
+
+  @Post('projects/issues/export')
+  @HttpCode(HttpStatus.OK)
+  exportProjectIssues(@Body() dto: ExportJiraIssuesDto) {
+    return this.jiraApiService.exportProjectIssues(dto);
   }
 }

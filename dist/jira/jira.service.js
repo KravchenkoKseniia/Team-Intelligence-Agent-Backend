@@ -45,11 +45,12 @@ let JiraService = class JiraService {
             ? response.issues.slice(0, limit)
             : [];
         const items = issues.map((issue) => {
-            var _a, _b;
+            var _a, _b, _c, _d, _e;
             return ({
                 id: issue.id,
                 key: issue.key,
                 summary: (_b = (_a = issue.fields) === null || _a === void 0 ? void 0 : _a.summary) !== null && _b !== void 0 ? _b : '',
+                status: (_e = (_d = (_c = issue.fields) === null || _c === void 0 ? void 0 : _c.status) === null || _d === void 0 ? void 0 : _d.name) !== null && _e !== void 0 ? _e : '',
             });
         });
         return {
