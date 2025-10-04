@@ -13,14 +13,16 @@ const jira_service_1 = require("./jira.service");
 const mcp_module_1 = require("../mcp/mcp.module");
 const jira_api_controller_1 = require("./jira-api.controller");
 const jira_api_service_1 = require("./jira-api.service");
+const confluence_api_controller_1 = require("./confluence-api.controller");
+const confluence_api_service_1 = require("./confluence-api.service");
 let JiraModule = class JiraModule {
 };
 exports.JiraModule = JiraModule;
 exports.JiraModule = JiraModule = __decorate([
     (0, common_1.Module)({
         imports: [mcp_module_1.McpModule],
-        controllers: [jira_controller_1.JiraController, jira_api_controller_1.JiraApiController],
-        providers: [jira_service_1.JiraService, jira_api_service_1.JiraApiService],
+        controllers: [jira_controller_1.JiraController, jira_api_controller_1.JiraApiController, confluence_api_controller_1.ConfluenceApiController],
+        providers: [jira_service_1.JiraService, jira_api_service_1.JiraApiService, confluence_api_service_1.ConfluenceApiService],
     })
 ], JiraModule);
 //# sourceMappingURL=jira.module.js.map

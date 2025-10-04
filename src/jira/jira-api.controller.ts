@@ -1,34 +1,15 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { PreviewJiraDirectDto } from './dto/preview-jira-direct.dto';
-import { ListJiraProjectsDto } from './dto/list-jira-projects.dto';
-import { ExportJiraIssuesDto } from './dto/export-jira-issues.dto';
-import { JiraApiService } from './jira-api.service';
+import { Controller, Post, HttpCode, HttpStatus } from "@nestjs/common";
+import { JiraApiService } from "./jira-api.service";
 
-@Controller('jira')
+@Controller("jira")
 export class JiraApiController {
   constructor(private readonly jiraApiService: JiraApiService) {}
 
-  @Post('preview')
+  @Post("export")
   @HttpCode(HttpStatus.OK)
-  async preview(@Body() dto: PreviewJiraDirectDto) {
-    const result = await this.jiraApiService.preview(dto);
-    return {
-      ok: true,
-      source: 'jira:api',
-      count: result.count,
-      items: result.items,
-    };
-  }
+  async export() {
+    const file = await this.jiraApiService.exportAllIssues();
 
-  @Post('projects')
-  @HttpCode(HttpStatus.OK)
-  listProjects(@Body() dto: ListJiraProjectsDto) {
-    return this.jiraApiService.listProjects(dto);
-  }
-
-  @Post('projects/issues/export')
-  @HttpCode(HttpStatus.OK)
-  exportProjectIssues(@Body() dto: ExportJiraIssuesDto) {
-    return this.jiraApiService.exportProjectIssues(dto);
+    return { ok: true, file };
   }
 }
