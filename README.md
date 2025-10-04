@@ -53,3 +53,18 @@ npm install
 ## Нотатки
 - Порт сервера задається змінною середовища `PORT`, за замовчуванням `3000`.
 - У `ValidationPipe` ввімкнено `whitelist` для автоматичного відкидання полів, яких немає у DTO, та `forbidNonWhitelisted` для запобігання неочікуваним даним.
+
+## Конфігурація MCP
+- `MCP_BASE_URL` — обовʼязковий. Базовий URL MCP-шлюзу, куди відправляються інвокації (наприклад, `https://mcp-gateway.local/invoke`).
+- `MCP_API_KEY` — опційно. Токен/ключ доступу до шлюзу (якщо потрібний). За замовчуванням відправляється в заголовку `Authorization: Bearer <token>`.
+- `MCP_API_KEY_HEADER` — опційно. Змінює назву заголовка для `MCP_API_KEY` (наприклад, `x-api-key`).
+- `MCP_HTTP_TIMEOUT` — опційно. Таймаут HTTP-запиту до MCP у мс (за замовчуванням `30000`).
+- `MCP_INVOKE_PATH_TEMPLATE` — опційно. Якщо шлюз очікує різні URL для різних інструментів, задайте шаблон з плейсхолдером `{toolName}`, наприклад `/tools/{toolName}/invoke`.
+
+Приклад запуску з MCP:
+
+```bash
+MCP_BASE_URL="https://mcp-gateway.local/invoke" \
+MCP_API_KEY="super-secret" \
+npm run start:dev
+```
