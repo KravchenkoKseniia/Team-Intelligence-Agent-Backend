@@ -34,6 +34,9 @@ type JiraSearchResp = {
     key: string;
     fields?: {
       summary?: string | null;
+      status?: {
+        name?: string | null;
+      } | null;
     } | null;
   }>;
 };
@@ -42,6 +45,7 @@ export type JiraPreviewItem = {
   id: string;
   key: string;
   summary: string;
+  status?: string;
 };
 
 export type JiraPreviewResponse = {
@@ -81,6 +85,7 @@ export class JiraService {
       id: issue.id,
       key: issue.key,
       summary: issue.fields?.summary ?? '',
+      status: issue.fields?.status?.name ?? '',
     }));
 
     return {
