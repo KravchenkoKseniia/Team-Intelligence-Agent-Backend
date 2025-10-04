@@ -12,6 +12,7 @@ import { VectorService, VectorDocument } from "../vector/vector.service";
 import { normalizeEnv } from "../utils/env-loader";
 
 import { SupabaseService } from "../supabase/supabase.service";
+import { AtlassianCredentialsService } from "../integrations/atlassian-credentials.service";
 
 const LOG_PREFIX = "[ConfluenceAPI]";
 const SPACES_PATH = "/wiki/rest/api/space";
@@ -42,15 +43,15 @@ type ExportSummary = {
 export class ConfluenceApiService {
   constructor(
     private readonly vectorService: VectorService,
-    private readonly supabase: SupabaseService
+    private readonly creds: AtlassianCredentialsService
   ) {}
 
   async exportAllSpacesContent(
     options: ExportVectorOptions = {}
   ): Promise<ExportSummary> {
-    const credentials = await this.resolveCredentials();
+    const credentials = await this.creds.getCredentials("atlassian");
     console.log(
-      `${LOG_PREFIX} ✅ Using credentials -> URL: ${credentials.confluenceUrl}, EMAIL: ${credentials.email}`
+      `[ConfluenceAPI] ✅ Using credentials -> ${credentials.baseUrl}`
     );
 
     const spaces = await this.fetchAllSpaces(credentials);
@@ -148,7 +149,7 @@ export class ConfluenceApiService {
   }
 
   private async fetchAllSpaces(credentials: {
-    confluenceUrl: string;
+    baseUrl: string;
     email: string;
     apiKey: string;
   }): Promise<ConfluenceSpace[]> {
@@ -157,7 +158,7 @@ export class ConfluenceApiService {
     const limit = 50;
 
     while (true) {
-      const url = `${credentials.confluenceUrl.replace(
+      const url = `${credentials.baseUrl.replace(
         /\/$/,
         ""
       )}${SPACES_PATH}?limit=${limit}&start=${start}`;
@@ -178,7 +179,7 @@ export class ConfluenceApiService {
   }
 
   private async fetchAllContentForSpace(
-    credentials: { confluenceUrl: string; email: string; apiKey: string },
+    credentials: { baseUrl: string; email: string; apiKey: string },
     spaceKey: string
   ): Promise<ConfluenceContent[]> {
     const pages: ConfluenceContent[] = [];
@@ -194,7 +195,7 @@ export class ConfluenceApiService {
         type: "page",
         status: "current",
       });
-      const url = `${credentials.confluenceUrl.replace(
+      const url = `${credentials.baseUrl.replace(
         /\/$/,
         ""
       )}${CONTENT_PATH}?${params.toString()}`;
@@ -212,47 +213,6 @@ export class ConfluenceApiService {
     }
 
     return pages;
-  }
-
-  private async resolveCredentials() {
-    const client = this.supabase.getClient();
-
-    const { data, error } = await client
-      .from("integrations")
-      .select("*")
-      .eq("type", "atlassian")
-      .eq("status", "connected") // якщо маєш статус активності
-      .limit(1)
-      .single();
-
-    if (error || !data) {
-      console.error(
-        "[ConfluenceAPI] ❌ Failed to load credentials from Supabase:",
-        error
-      );
-      throw new BadGatewayException(
-        "Confluence credentials not found in Supabase"
-      );
-    }
-
-    console.log("[ConfluenceAPI] 🔑 Loaded credentials from Supabase");
-
-    // 👇 дані з твоєї таблиці
-    const { api_email, api_token, config } = data;
-    const url =
-      (config?.url as string) ??
-      data.oauth_authorize_url ??
-      "https://webew.atlassian.net/wiki";
-
-    if (!url || !api_email || !api_token) {
-      throw new BadGatewayException("Confluence credentials are incomplete");
-    }
-
-    return {
-      confluenceUrl: url,
-      email: api_email,
-      apiKey: api_token,
-    };
   }
 
   private buildHeaders({ email, apiKey }: { email: string; apiKey: string }) {
