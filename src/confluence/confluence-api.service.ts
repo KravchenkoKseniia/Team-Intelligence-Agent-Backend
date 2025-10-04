@@ -11,6 +11,8 @@ import { join } from "path";
 import { VectorService, VectorDocument } from "../vector/vector.service";
 import { normalizeEnv } from "../utils/env-loader";
 
+import { SupabaseService } from "../supabase/supabase.service";
+
 const LOG_PREFIX = "[ConfluenceAPI]";
 const SPACES_PATH = "/wiki/rest/api/space";
 const CONTENT_PATH = "/wiki/rest/api/content";
@@ -38,12 +40,15 @@ type ExportSummary = {
 
 @Injectable()
 export class ConfluenceApiService {
-  constructor(private readonly vectorService: VectorService) {}
+  constructor(
+    private readonly vectorService: VectorService,
+    private readonly supabase: SupabaseService
+  ) {}
 
   async exportAllSpacesContent(
     options: ExportVectorOptions = {}
   ): Promise<ExportSummary> {
-    const credentials = this.resolveCredentials();
+    const credentials = await this.resolveCredentials();
     console.log(
       `${LOG_PREFIX} ✅ Using credentials -> URL: ${credentials.confluenceUrl}, EMAIL: ${credentials.email}`
     );
@@ -209,29 +214,45 @@ export class ConfluenceApiService {
     return pages;
   }
 
-  private resolveCredentials() {
-    this.ensureEnvLoaded();
-    const confluenceUrl = this.normalizeEnv(process.env.CONFLUENCE_URL);
-    const email = this.normalizeEnv(process.env.CONFLUENCE_EMAIL);
-    const apiKey =
-      this.normalizeEnv(process.env.CONFLUENCE_API_KEY) ??
-      this.normalizeEnv(process.env.CONFLUENCE_API_TOKEN);
+  private async resolveCredentials() {
+    const client = this.supabase.getClient();
 
-    console.log(
-      `${LOG_PREFIX} ENV check -> CONFLUENCE_URL=${Boolean(
-        confluenceUrl
-      )}, CONFLUENCE_EMAIL=${Boolean(email)}, CONFLUENCE_API_KEY=${
-        apiKey ? "***set***" : "undefined"
-      }`
-    );
+    const { data, error } = await client
+      .from("integrations")
+      .select("*")
+      .eq("type", "atlassian")
+      .eq("status", "connected") // якщо маєш статус активності
+      .limit(1)
+      .single();
 
-    if (!confluenceUrl || !email || !apiKey) {
+    if (error || !data) {
       console.error(
-        `${LOG_PREFIX} ❌ Missing Confluence credentials in environment variables`
+        "[ConfluenceAPI] ❌ Failed to load credentials from Supabase:",
+        error
       );
-      throw new BadGatewayException("Confluence credentials missing");
+      throw new BadGatewayException(
+        "Confluence credentials not found in Supabase"
+      );
     }
-    return { confluenceUrl, email, apiKey };
+
+    console.log("[ConfluenceAPI] 🔑 Loaded credentials from Supabase");
+
+    // 👇 дані з твоєї таблиці
+    const { api_email, api_token, config } = data;
+    const url =
+      (config?.url as string) ??
+      data.oauth_authorize_url ??
+      "https://webew.atlassian.net/wiki";
+
+    if (!url || !api_email || !api_token) {
+      throw new BadGatewayException("Confluence credentials are incomplete");
+    }
+
+    return {
+      confluenceUrl: url,
+      email: api_email,
+      apiKey: api_token,
+    };
   }
 
   private buildHeaders({ email, apiKey }: { email: string; apiKey: string }) {

@@ -5,6 +5,7 @@ import { McpModule } from "./mcp/mcp.module";
 import { JiraModule } from "./jira/jira.module";
 import { VectorModule } from "./vector/vector.module";
 import { ConfluenceModule } from "./confluence/confluence.module";
+import { SupabaseModule } from "./supabase/supabase.module";
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ConfluenceModule } from "./confluence/confluence.module";
     JiraModule,
     VectorModule, // ✅ додаємо модуль векторів
     ConfluenceModule, // ✅ додаємо модуль конфлюенсу
+    SupabaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],
