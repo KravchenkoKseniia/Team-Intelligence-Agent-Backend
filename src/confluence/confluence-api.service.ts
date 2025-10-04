@@ -33,10 +33,13 @@ type ConfluenceContent = Record<string, unknown>;
 
 type ExportVectorOptions = { vectorize?: boolean; pineconeNamespace?: string };
 type ExportSummary = {
-  file: string;
+  file?: string | null;
   spaceCount: number;
   pageCount: number;
-  vectorization?: { namespace: string; vectorCount: number };
+  vectorization?: {
+    namespace: string;
+    vectorCount: number;
+  };
 };
 
 @Injectable()
@@ -51,18 +54,11 @@ export class ConfluenceApiService {
   ): Promise<ExportSummary> {
     const credentials = await this.creds.getCredentials("atlassian");
     console.log(
-      `[ConfluenceAPI] ✅ Using credentials -> ${credentials.baseUrl}`
+      `${LOG_PREFIX} ✅ Using credentials -> ${credentials.baseUrl}, EMAIL: ${credentials.email}`
     );
 
     const spaces = await this.fetchAllSpaces(credentials);
     console.log(`${LOG_PREFIX} 🔎 Found ${spaces.length} spaces`);
-
-    const exportDir = join(process.cwd(), EXPORT_DIRECTORY);
-    await mkdir(exportDir, { recursive: true });
-    const filePath = join(
-      exportDir,
-      `${EXPORT_FILENAME_PREFIX}-${Date.now()}.json`
-    );
 
     const outPayload = {
       exportedAt: new Date().toISOString(),
@@ -76,7 +72,7 @@ export class ConfluenceApiService {
 
     let totalVectors = 0;
 
-    // Проходимо по просторах по черзі — НЕ накопичуємо весь Confluence в пам'яті
+    // Проходимо по кожному простору (space)
     for (const space of spaces) {
       const key = (space.key ?? "").toString();
       if (!key) {
@@ -92,11 +88,10 @@ export class ConfluenceApiService {
       const pages = await this.fetchAllContentForSpace(credentials, key);
       console.log(`${LOG_PREFIX} 📌 ${key}: ${pages.length} pages`);
 
-      // Додаємо у експорт (файл) — можна зберігати по-space щоб не тримати все
       outPayload.spaces.push({ space, pages });
       outPayload.pageCount += pages.length;
 
-      // Якщо потрібно векторизувати — робимо це прямо зараз (streaming)
+      // Якщо потрібно — векторизуємо контент
       if (options.vectorize && pages.length > 0) {
         const docs: VectorDocument[] = pages.map((page) => {
           const pageId =
@@ -104,7 +99,7 @@ export class ConfluenceApiService {
           const title = this.extractString((page as any).title);
           const bodyText = this.normalizeText(this.extractBodyStorage(page));
           const textParts = [
-            "Space: " + (space.name ?? key),
+            `Space: ${space.name ?? key}`,
             title ? `Title: ${title}` : "",
             bodyText ? `Content: ${bodyText}` : "",
           ].filter(Boolean);
@@ -128,15 +123,13 @@ export class ConfluenceApiService {
 
     outPayload.spaceCount = outPayload.spaces.length;
 
-    // Запис файлу (можна зробити потоковим записом, але тут простий запис)
-    await writeFile(filePath, JSON.stringify(outPayload, null, 2), "utf8");
-
     console.log(
-      `${LOG_PREFIX} ✅ Export complete -> ${outPayload.pageCount} pages from ${outPayload.spaceCount} spaces saved to ${filePath}`
+      `${LOG_PREFIX} ✅ Export complete -> ${outPayload.pageCount} pages from ${outPayload.spaceCount} spaces`
     );
 
+    // ✅ Повертаємо об’єкт в пам’яті, без збереження на диск
     return {
-      file: filePath,
+      file: null, // раніше тут був шлях до JSON
       spaceCount: outPayload.spaceCount,
       pageCount: outPayload.pageCount,
       vectorization: options.vectorize
