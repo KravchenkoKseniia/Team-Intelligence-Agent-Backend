@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsEmail,
   IsInt,
   IsOptional,
@@ -15,6 +16,17 @@ export const DEFAULT_ISSUE_BATCH_SIZE = 100;
 export const MAX_ISSUE_BATCH_SIZE = 100;
 export const DEFAULT_PROJECT_BATCH_SIZE = 50;
 export const MAX_PROJECT_BATCH_SIZE = 1_000;
+
+function toBoolean(value: unknown, defaultValue = false): boolean {
+  if (value === undefined || value === null) {
+    return defaultValue;
+  }
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  const normalized = String(value).trim().toLowerCase();
+  return ['1', 'true', 'yes', 'on'].includes(normalized);
+}
 
 export class ExportJiraIssuesDto {
   @IsOptional()
@@ -59,4 +71,14 @@ export class ExportJiraIssuesDto {
   @Min(1)
   @Max(MAX_PROJECT_BATCH_SIZE)
   projectBatchSize: number = DEFAULT_PROJECT_BATCH_SIZE;
+
+  @IsOptional()
+  @Transform(({ value }) => toBoolean(value, false))
+  @IsBoolean()
+  vectorize = false;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 64)
+  pineconeNamespace?: string;
 }
